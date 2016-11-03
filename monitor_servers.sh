@@ -2,8 +2,6 @@
 
 # Monitor servers availability using a cron job
 
-#TODO:  Email if service is less than 45%
-
 seed_domain=$1
 
 HOST=$seed_domain
@@ -33,7 +31,10 @@ else
 
 fi
 
+# Test
 if [[ $status_level -eq 100 ]]; then
 	echo "ALERT! 0% Availability! Service is definitely DOWN.  Activate SLA Agreement. Call 0-NUMBER-OLA!"
+	mail -s "$HOSt is down now!" email@domain.com <<< "ALERT! $HOST is down. "
+
 fi
 
