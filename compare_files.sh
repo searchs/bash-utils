@@ -1,167 +1,198 @@
 #!/usr/bin/env bash
 
 #####################################################################
-#               Using Bash.  Not the PySpark solution               #
-#       Compare old extracts and extracts from S3 (Kafka)           #
+#                                                                   #
+#       Compare Legacy extracts and extracts from S3 (Kafka)        #
 #       Accepts 2 files as inputs.                                  #
 #       Legacy AC extract is the Primary file                       #
 #                                                                   #
 #####################################################################
 set -e
+# Need to install parallel
 
-# # Assuming jq is installed
-# # Read with jq to break into multiple lines
-# cat $source_$run_date.json | jq -c '.' > $source_$run_date_multilines.json 
+# jq: with -c option breaks file content into multiple lines
+# parallel: allow for parallel sorting without maxed-memory
+# pv: monitor progress of job 
+
+data_date=`date +%Y%m%d -d yesterday`
+echo $data_date
 
 primary=$1
 secondary=$2
 
 function compare_size()
 {
-  file_1=$1
-  file_2=$2
+   file_1=$1
+   file_2=$2
 
    file1_size=`wc -c $file_1 | awk '{print $1}'`
    file2_size=`wc -c $file_2 | awk '{print $1}'`
     if [ $file1_size -eq $file2_size ]                           
    then
-     echo "-File size is the same.   Continue further check."
+     echo "SUCCESS: File size is the same.   Continue further check."
+
    else
-    echo "$file_1 is $file1_size."
+    echo "$file_1 is ${file1_size}."
     echo "$file_2 is $file2_size."
     echo "ERROR:   File size does not match"
+    # call python script to run checks and spit out the difference into a csv
+    # ./extractor_compare.py $file_1 $file_2 #to uncomment once validation is complete
     exit 1
    fi
 }
-
 
 function compare_row_count()
 {
     file_1=$1
-  file_2=$2
-   file1_row_count=`wc -l $file_1 | awk '{print $1}'`
-   file2_row_count=`wc -l $file_2 | awk '{print $1}'`
+    file_2=$2
+
+    file1_row_count=`wc -l $file_1 | awk '{print $1}'`
+    file2_row_count=`wc -l $file_2 | awk '{print $1}'`
     if [ $file1_row_count -eq $file2_row_count ]                           
    then
-     echo "-File size is the same.   Continue further check."
+     echo "SUCCESS: File row count is the same.  Continue further check."
+
    else
     echo "$file_1 has $file1_row_count."
     echo "$file_2 is $file2_row_count."
     echo "ERROR:   File row count does not match"
+    # call python script to run checks and spit out the difference into a csv
+    # ./extractor_compare.py $file_1 $file_2 #to uncomment once validation is complete
     exit 1
    fi
 }
 
-
 function get_md5_hash()
 {
     filename=$1
-    md5_hash=`md5 $filename`
+    md5_hash=`md5sum <<< $filename`
     read -a arr <<< $md5_hash
-    arr_length=$(echo ${#arr[@]})
-    hash_value=$(echo ${arr[3]})
+    hash_value=$(echo ${arr[0]})
     echo $hash_value
 }
-
 
 function compare_hash()
 {
     file_1=$1
     file_2=$2
-   file1_hash=$(get_md5_hash "$file_1")
-   file2_hash=$(get_md5_hash "$file_2")
-   echo $file1_hash
-   echo $file2_hash
+    file1_hash=`get_md5_hash "$file_1"`
+    file2_hash=`get_md5_hash "$file_2"`
+
+    echo $file1_hash
+    echo $file2_hash
 
 if [ "$file1_hash" == "$file2_hash" ]                           
    then
      echo "-File hash is the same.  No further check required."
+
    else
     echo "$file_1 hash is $file1_hash."
     echo "$file_2 hash is $file2_hash."
     echo "ERROR:   File hash does not match"
+    # call python script to run checks and spit out the difference into a csv
+    # ./extractor_compare.py $file_1 $file_2 #to uncomment once validation is complete
     exit 1
    fi
 }
 
+function quicksort(){
+  usage() {
+
+    echo "Parallel sort"
+    echo "usage: psort file1 file2"
+    echo "Sorts text file file1 and stores the output in file2"
+}
+
+parallel --citation
+
+# test if we have two arguments on the command line
+if [ $# != 2 ]
+then
+    usage
+    exit
+fi
+
+pv $1 | parallel --pipe --files sort -S512M | parallel -Xj1 sort -S1024M -m {} ';' rm {} > $2
+
+}
+
+
+get_md5_hash $1
+get_md5_hash $2
+
 # get the filenames without extensions
 primary_name=$(echo $primary | cut -f 1 -d '.')
 secondary_name=$(echo $secondary | cut -f 1 -d '.')
-# check - remove after testing
-echo $primary_name
-echo $secondary_name
 
 # SANITIZE FILES
-# Assuming jq is installed. Read with jq to break into multiple lines
-primary_multiline=${primary_name}_multilines.json
-secondary_multiline=${secondary_name}_multilines.json
+primary_multiline=${primary_name}_multilines.txt
+secondary_multiline=${secondary_name}_multilines.txt
 
-cat $primary | jq -c '.' > $primary_multiline
-cat $secondary | jq -c '.' > $secondary_multiline
 
-# generate a manifest for both files : file name, file size, record/row count
-./manifest.sh $primary_multiline
-./manifest.sh $secondary_multiline
+# works
+# Primary
+cat -AE $primary | tr -d '^' > clean_primary.json
+perl -pi -w -e 's/}M{/}\n{/g;' clean_primary.json 
+mv clean_primary.json $primary_multiline
+ 
+# Secondary
+cat -AE $secondary | tr -d '^' > clean_secondary.json
+perl -pi -w -e 's/}M{/}\n{/g;' clean_secondary.json 
+mv clean_secondary.json $secondary_multiline
+ls -laSh
+
+# jq -c '.'< $primary > $primary_multiline
+# jq -c '.'< $secondary > $secondary_multiline
+
+echo "line count after breaking into multilines ..."
+wc -l $primary_multiline
+wc -l $secondary_multiline
 
 # Sort files
-echo "Sorting each file ......."
+echo "Preparing filenames for sorting ......."
+primary_sorted=sorted_${primary_name}.txt
+secondary_sorted=sorted_${secondary_name}.txt
 
-primary_sorted=${primary_name}_sorted.json
-secondary_sorted=${secondary_name}_sorted.json
+echo "Sorting Primary file now"
+quicksort $primary_multiline $primary_sorted
 
-sort $primary_multiline > $primary_sorted
-sort $secondary_multiline > $secondary_sorted
-
-# exit 1
+echo "Sorting Secondary file now "
+quicksort $secondary_multiline $secondary_sorted
 
 # Ensure both files only contain unique values
-primary_unique=${primary_name}_unique.json
-secondary_unique=${secondary_name}_unique.json
+primary_unique=${primary_name}_unique.txt
+secondary_unique=${secondary_name}_unique.txt
 
-echo $primary_unique
-echo $secondary_unique
-
-echo "Extracting the unique values in the files only ...."
+# Uniq options: 
+echo "Extracting the unique values in the files ...."
 uniq $primary_sorted > $primary_unique 
 uniq $secondary_sorted > $secondary_unique
 
+if [ -z "$primary_sorted" ];
+
+echo "Unique files now generated ...."
+
 # MD5 Hash values
-echo "Generating md5 hash for each file"
+echo "Printing Hash values for both files.  Primary first ................"
+md5sum <<< $primary_unique
+md5sum <<< $secondary_unique
 
 compare_size $primary_unique $secondary_unique
 compare_row_count $primary_unique $secondary_unique
 compare_hash $primary_unique $secondary_unique
 
-# md5 $primary_unique
-# md5 $secondary_unique
+
 
 # generate a manifest for both files with no dups : file name, file size, record/row count
 ./manifest.sh $primary_unique
 ./manifest.sh $secondary_unique
 
-# SIMPLE DIFF - Suspend Diff
-# diff $primary_unique $secondary_unique
+# Cleanup Process
+# rm *_multilines*
+# rm sorted_*
+# rm $primary_*git log
 
-# THE LONG ROUTE
-# make the legacy file the primary file
-# open the primary file for reading
-# read each line and grep for string in the secondary file
+# rm $secondary_*
 
-# PENDING RESULTS
-
-    # primary_file=$1
-    # secondary_file=$2
-
-    # while IFS= read -r line
-    # do
-    #     grep -x "$line" "$secondary_file"
-
-    #     if [ $? -eq 0 ]; then
-    #           echo "Missing in Kafka"
-    #     fi
-    # done <"$primary_file"
-
-# if search string is found move to the next line
-# if search string is not found add the search string(line) to external missing file
-# generate manifest for missing records file
-# verify reports
+echo "End of processing."
+echo "EXIT STATUS: $?.  0 means success!"
