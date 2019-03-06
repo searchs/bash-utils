@@ -14,6 +14,10 @@ set -e
 # parallel: allow for parallel sorting without maxed-memory
 # pv: monitor progress of job 
 
+#Check is files in current dir contain specified text
+for x in $(ls); do echo $x; less $x | grep -i truncate; done
+
+
 data_date=`date +%Y%m%d -d yesterday`
 echo $data_date
 
