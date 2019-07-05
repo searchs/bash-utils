@@ -1,17 +1,14 @@
-#! /bin/bash 
+#!/usr/bin/env sh
 
-# Linux Flavour Information
-# echo $(lsb_release -a)
-echo "You are using $( basename $0)"
-echo $BASH_VERSION
+# Create SBT project
+# Usage: sh ./genesis.sh project-name
 
-# Verbose Shell script running
-# bash -x ./genesis.sh
-
-
-
-# anything other than 0 is an error
-exit 0
-
-
-
+project_name=$1
+mkdir $project_name
+cd $project_name
+mkdir -p src/{main,test}/{java,resources,scala}
+mkdir lib project target
+touch build.sbt
+cd ..
+find .
+echo "Done ...."
