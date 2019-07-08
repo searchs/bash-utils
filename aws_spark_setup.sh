@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 # SPARK AWS EC2 INSTALLATION AND CONFIGURATION
 
+# TODO: Install Java, Scala and Spark using sdk (sdkman.io 
 # TODO:   parameterize scala version and spark version
 
 # Assuming EC2 box is up and running and you have the .pem 
