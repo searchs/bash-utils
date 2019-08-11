@@ -31,7 +31,7 @@ libraryDependencies ++= Seq(
     "org.scalactic" %% "scalactic" % "3.0.4",
     "org.scalatest" %% "scalatest" % "3.0.4" % "test"
 )' > build.sbt
-find .
+ls -lah $project_name
 printf "\n=========== SEE THE GENERATED PROJECT STRUCTURE =============\n"
 cat build.sbt
 printf "\n=========== NOW CODE!!! =============\n"
