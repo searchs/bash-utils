@@ -21,7 +21,7 @@ project/plugins/src_managed/
 .idea
 ' > .gitignore
 
-echo 'name := "TODO"
+echo 'name := "$1"
 
 version := "1.0"
 
