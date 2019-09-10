@@ -26,10 +26,11 @@ echo 'name := "TODO"
 version := "1.0"
 
 scalaVersion := "2.12.8"
+resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
+
 
 libraryDependencies ++= Seq(
-    "org.scalactic" %% "scalactic" % "3.0.4",
-    "org.scalatest" %% "scalatest" % "3.0.4" % "test"
+    "org.scalatest" %% "scalatest" % "3.2.0-SNAP10" % "test"
 )' > build.sbt
 ls -lah $project_name
 printf "\n=========== SEE THE GENERATED PROJECT STRUCTURE =============\n"
