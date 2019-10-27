@@ -9,6 +9,7 @@ cd $project_name
 mkdir -p src/{main,test}/{java,resources,scala}
 mkdir lib project target
 
+git init
 echo 'target/
 project/target
 lib_managed/
@@ -21,16 +22,18 @@ project/plugins/src_managed/
 .idea
 ' > .gitignore
 
-echo 'name := $1
+echo 'name := "${1}"
 
-version := "1.0"
+version := "0.0.1"
 
 scalaVersion := "2.12.8"
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
 
 
 libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.2.0-SNAP10" % "test"
+    "org.scalatest" %% "scalatest" % "3.2.0-M1" % "test",
+"org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test"
+
 )' > build.sbt
 ls -lah $project_name
 printf "\n=========== SEE THE GENERATED PROJECT STRUCTURE =============\n"
