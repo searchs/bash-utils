@@ -5,9 +5,17 @@
 
 project_name=$1
 mkdir $project_name
-cd $project_name
-mkdir -p src/{main,test}/{java,resources,scala}
-mkdir lib project target
+cd ${project_name}
+
+mkdir -p src/main/java
+mkdir -p src/main/resources
+mkdir -p src/main/scala
+
+mkdir -p src/test/java
+mkdir -p src/test/resources
+mkdir -p src/test/scala
+
+mkdir lib/ project/ target/
 
 git init
 echo 'target/
@@ -22,11 +30,11 @@ project/plugins/src_managed/
 .idea
 ' > .gitignore
 
-echo 'name := "${1}"
+echo 'name := $1
 
 version := "0.0.1"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.1"
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
 
 
