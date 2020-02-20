@@ -30,7 +30,7 @@ project/plugins/src_managed/
 .idea
 ' > .gitignore
 
-echo 'name := $1
+echo 'name := "project_name"
 
 version := "0.0.1"
 
@@ -48,6 +48,6 @@ printf "\n=========== SEE THE GENERATED PROJECT STRUCTURE =============\n"
 cat build.sbt
 printf "\n=========== NOW CODE!!! =============\n"
 
-sleep 3
+sleep 1
 echo "project structure generated ...."
 echo "Now update the build.sbt file accordingly! "
