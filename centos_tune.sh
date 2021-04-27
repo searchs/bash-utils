@@ -3,7 +3,7 @@
 sudo yum clean all
 sudo yum update -y
 sudo yum upgrade -y
-echo -e "\INFO:  Cleaning old kernels and unnecessary packages on system...\n"
+echo -e "\nINFO:  Cleaning old kernels and unnecessary packages on system...\n"
 
 sudo package-cleanup -q --leaves | xargs -r -l1 yum -y remove
 sudo package-cleanup --oldkernel --count=2
