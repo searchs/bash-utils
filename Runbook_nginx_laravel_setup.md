@@ -5,9 +5,9 @@ Here's a detailed runbook for configuring and deploying a Laravel application on
 #### **1. Prerequisites**
 
 1. **Server Requirements:**
-   - Ubuntu 20.04 or later
+   - Ubuntu 24.04 or later
    - Nginx
-   - PHP 7.4 or later
+   - PHP 8.3 or later
    - Composer
    - MySQL or PostgreSQL
 
