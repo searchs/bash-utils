@@ -33,7 +33,7 @@ scala -version
 
 # Install Python
 sudo apt-get update
-sudo apt-get install python3.7
+sudo apt-get install python3.12
 
 # Get and install Spark with hadoop
 wget https://www.apache.org/dyn/closer.lua/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz
